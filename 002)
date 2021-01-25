@@ -1,0 +1,645 @@
+
+분석을 위한 언어를 어떤걸 선택할지를 처음에 결정을 하는데 ?
+
+                               SQL,  R, 파이썬
+
+당장 이 수업 끝날때즈음 R 을 활용해서 이루어야할 목표 ? 
+1. 케글 상위권 도전
+2. 빅데이터 기사시험 필기,실기
+
+ 어제 배웠던 내용은 R 을 이용한 데이터 검색
+
+  emp[ 행, 열 ] 
+
+■ 그룹함수 
+
+       Oracle                  vs                  R  
+
+1.     max                                         max
+2.     min                                          min
+3.     sum                                         sum
+4.     avg                                          mean
+5.    count                                      length (세로)
+                                                       table  (가로) 
+
+■ Q-52.  최대월급을 출력하시오 !
+
+# 1. 워킹 디렉토리를 지정한다
+setwd("d:\\data")  
+
+# 2. 지정된 워킹 디렉토리를 확인한다.
+getwd()
+
+#3. emp3.csv 를 로드하여 emp 데이터 프레임을 만든다. 
+emp <-  read.csv("emp3.csv")
+
+#4. 최대월급을 구한다. 
+max(emp$sal)
+
+■ Q-53.  직업이 SALESMAN 인 사원들의 최대월급을 출력하시오 !
+
+result <-  emp[ emp$job=="SALESMAN", "sal"]
+result 
+[1] 1250 1600 1500 1250
+
+max(result)
+
+한줄로 처리하고 싶다면 ?
+
+max( emp[ emp$job=="SALESMAN", "sal"] )
+
+■ Q-54.  20번 부서번호인 사원들 중에서의 최소월급을 출력하시오 !
+
+result <-  emp[ emp$deptno==20,  "sal"]
+min(result)
+
+■ Q-55.  직업, 직업별 최대월급을 출력하시오 !
+
+SQL> select  job,  max(sal)
+          from  emp
+          group  by  job;
+
+R>  aggregate( sal~job,  emp,  max )
+
+설명:  aggregate(계산될컬럼~기준될컬럼, 테이블명, 함수명)
+
+■ Q-56.  부서번호, 부서번호별 토탈월급을 출력하시오 !
+
+SQL> select  deptno, sum(sal)
+           from  emp
+           group  by  deptno;
+
+R>  aggregate( sal~deptno, emp, sum )
+
+설명:  aggregate(계산될컬럼~기준될컬럼, 테이블명, 함수명)
+
+   deptno   sal
+1     10  8750
+2     20 10875
+3     30  9400
+
+■ Q-57.  위에서 출력되고 있는 컬럼명을 한글로 부서번호, 토탈월급으로 변경하시오 !
+
+R>  result <-  aggregate( sal~deptno, emp, sum )
+
+R>  names(result) <-  c('부서번호', '토탈월급')
+
+R>  result 
+
+■ Q-58.  위의 결과를 다시 출력하는데 토탈월급이 높은것부터 출력하시오 !
+
+library(doBy)
+
+orderBy( ~-토탈월급, result )
+
+부서번호 토탈월급
+2       20    10875
+3       30     9400
+1       10     8750
+
+■ Q-59.  직업, 직업별 인원수를 출력하시오 !
+
+SQL>  select  job,  count(empno)
+           from  emp
+           group  by  job;
+
+R> result <-  aggregate( empno~job,  emp,  length )
+
+R> names(result) <- c("직업", "인원수")
+
+R> result   
+
+■ Q-60. 위의 결과를 다시 출력하는데 인원수가 높은것 부터 출력하시오 !
+
+R>  library(doBy)
+
+R> orderBy( ~-인원수, result) 
+
+■ Q-61. 직업, 직업별 인원수를 가로로 출력하시오 !
+
+R>  table(emp$job) ----- (사실상 Count 함수) 
+
+ ANALYST     CLERK   MANAGER PRESIDENT  SALESMAN 
+        2         4                 3                       1                4 
+
+                          ↓
+■ Q-62. 위의 결과를 원형 그래프로 시각화 하시오 !
+
+pie(table(emp$job), col=rainbow(14))
+
+■ Q-63. 부서번호, 직업, 부서번호별 직업별 토탈월급을 출력하시오 !
+
+SQL>  select  deptno,  job,  sum(sal)
+            from  emp
+            group  by  deptno, job; 
+
+R> aggregate( sal ~ deptno+job,  emp, sum )
+
+■ Q-64. 입사한 년도(4자리), 입사한 년도별 평균월급을 출력하시오 !
+
+SQL>  select  to_char(hiredate, 'RRRR'),  avg(sal)
+            from  emp
+            group   by   to_char(hiredate,'RRRR');
+
+R> x <- aggregate( sal ~ format( as.Date(emp$hiredate),'%Y'),  emp,  mean )
+
+R> names(x) <- c("입사한 년도", "평균월급")
+
+R> x 
+
+  입사한 년도 평균월급
+1        1980        800.0
+2        1981         2282.5
+3        1982         2150.0
+4        1983         1100.0
+
+■ Q-65. 위의 결과에서 소수점 이하는 안나오게 하시오 !
+
+R>  x$평균월급 <- trunc(x$평균월급)
+
+R>  x
+
+trunc 설명:  x 데이터 프레임의 평균월급의 값의 소수점 이하를 버리고 x 데이터 프레임의
+]평균월급에 넣는다.
+
+■ Q-66.  머신러닝 때 사용할 유방암 데이터를 R 로 로드하고 전체 건수가 몇건인지
+확인하시오 !  ( 데이터 게시판 54번 )
+         
+ 책 129페이지에 유방암 데이터에 대한 설명 
+ 이 데이터는 위스콘신 대학교의 연구원이 기부했으며 유방 종양의 미세침흡인물 디지털
+ 이미지에서 측정한 값이 들어있다. 이 값은 디지털 이미지에 존재하는 새포핵의 특성을
+ 나타낸다. 569개의 암조직 검사 예시가 들어있으며 각 예시는 32개의 특징을 갖는다.
+ 
+
+갑산성 초음파 검사할 때 초음파로 확인할 때 나오는 디지털 이미지 데이터
+ 1. 반지름
+ 2. 질감
+ 3. 둘레
+ 4. 넓이
+ 5. 매끄러움
+ 6. 조밀성
+ 7. 오목함
+
+wisc <-  read.csv("wisc_bc_data.csv")
+
+nrow(wisc)  #전체 건수 확인 
+[1] 569
+
+ncol(wisc)  # 컬럼의 갯수 확인 
+
+str(wisc)   #  데이터 프레임 구조 확인 
+
+설명 : diagnosis 만 문자이고 나머지는 다 숫자 인데 diagnosis 가 유방암 환자가  
+          양성(B) 인지 악성인지(M) 를 나타내는 라벨(정답) 컬럼 입니다.  종속 변수 입니다.
+
+■ Q-67.   유방암 데이터에서 양성 환자가 몇명이고 악성 환자가 몇명인지 확인하시오 !
+
+세로:  aggregate(  id ~diagnosis ,  wisc,  length )
+
+가로:    table(wisc$diagnosis)
+ B      M 
+357   212
+
+■ Q-68.  위의 결과를 원형 그래프로 시각화 하시오 !
+
+pie ( table(wisc$diagnosis), col=c('green','red') )
+
+■ Q-69.  직업, 직업별 토탈월급을 가로로 출력하시오 !
+
+세로:  aggregate( sal~job,  emp,  sum ) 
+
+가로:  tapply( emp$sal, emp$job, sum )  
+
+ ANALYST     CLERK   MANAGER   PRESIDENT   SALESMAN 
+     6000         4150       8275            5000              5600
+
+■ Q-70.  위의 결과를 막대 그래프로 시각화 하시오 !
+
+ x <-  tapply( emp$sal, emp$job, sum ) 
+
+ barplot( x,  main="직업별 토탈월급", col=rainbow(5),  density=50 ) 
+
+■ Q-71.  입사한 년도(4자리), 입사한 년도별 토탈월급을 출력하시오 !
+
+세로:  aggregate(  sal ~ format( as.Date(emp$hiredate),'%Y') , emp,  sum )
+
+가로:  tapply( emp$sal,  format( as.Date(emp$hiredate),'%Y'),  sum ) 
+
+  1980  1981  1982    1983 
+  800  22825   4300   1100 
+
+■ Q-72. 위의 결과를 막대 그래프로 시각화 하시오 !
+
+  x <- tapply( emp$sal,  format( as.Date(emp$hiredate),'%Y'),  sum ) 
+
+ barplot( x,  main="년도별 토탈월급", col=rainbow(5),  density=50 ) 
+
+■ Q-73.  아래의 SQL의 결과를 R 로 구현하시오 !
+
+SQL> select  job, sum( decode( deptno, 10, sal)  )   )  as "10",
+                              sum( decode( deptno, 20, sal)  )    ) as  "20",
+                              sum( decode( deptno, 30, sal)  )    ) as  "30"
+                              from  emp
+                           group   by  job;
+
+R> attach(emp)
+R> tapply( sal, list(job, deptno), sum )  
+
+설명:  attach(emp) 를 사용했기 때문에 emp$sal, emp$job, emp$deptno 라고 안쓰고
+ sal, job, deptno 로만 작성할 수 있었다. 
+
+                  10   20   30
+ANALYST     NA  6000   NA               
+CLERK        1300 1900  950
+MANAGER   2450 2975 2850
+PRESIDENT   5000   NA   NA
+SALESMAN    NA   NA  5600
+
+설명: 위의 데이터를 가지고 그래프를 그릴려면 NA 이 있으면 안됩니다. 
+NA 값을 숫자 0 으로 변경해 줘야합니다. 
+
+■ Q-74.  위의 결과의 NA 를 숫자 0 으로 출력되게하시오 !
+
+R> attach(emp)
+R> x <- tapply( sal, list(job, deptno), sum )  
+
+설명:  list(job,deptno) 를 써서 직업별 부서번호별 집계결과를 출력 
+
+R> x[ is.na(x) ] <- 0
+
+R> x 
+                  10   20   30
+ANALYST      0    6000    0
+CLERK         1300 1900  950
+MANAGER   2450  2975 2850
+PRESIDENT   5000    0    0
+SALESMAN     0    0 5600
+
+■ Q-75. 위의 결과에서 컬럼명만 출력하고  로우명만 출력하시오 !
+
+R> colnames(x)
+
+R> rownames(x) 
+
+■ Q-76. 위의 결과 데이터를 막대 그래프로 시각화 하시오 !
+
+R> barplot( x,  col=rainbow(5), legend=rownames(x), beside=T, density=50) 
+
+legend 는 그래프의 설명 박스입니다.
+beside=T 로 해야 직업별로 각각 막대그래프가 그려집니다.
+
+
+■ Q-77.  입사한 년도(4자리),  입사한 년도별 직업별 토탈월급을 출력하시오 !
+
+R> tapply( emp$sal,  list( format( as.Date(emp$hiredate), '%Y'), emp$job), sum )
+
+         ANALYST CLERK MANAGER PRESIDENT SALESMAN
+1980      NA   800      NA        NA       NA
+1981    3000   950    8275      5000     5600
+1982    3000  1300      NA        NA       NA
+1983      NA  1100      NA        NA       NA
+
+■ Q-78. 위의 결과에서 NA 를 0 으로 출력되게 하시오 !
+
+R> x <- tapply( emp$sal,  list( format( as.Date(emp$hiredate), '%Y'), emp$job), sum )
+
+R>  x [ is.na(x) ] <- 0
+
+R>  x  
+
+■ Q-79.  위의 결과를 막대 그래프로 그리시오 ~
+
+x <- tapply( emp$sal,  list(  emp$job, format( as.Date(emp$hiredate), '%Y')), sum )
+
+x [ is.na(x) ] <- 0
+
+barplot( x,  col=rainbow(5), legend=rownames(x), beside=T, density=50) 
+
+■ Q-80.  (점심시간 문제)  
+입사한 년도(4자리)를 막대 그래프의 x 축으로 구성하고 
+막대 그래프의 y 축을  부서번호의 평균월급으로 구성 되게 하는데
+입사한 년도별로 부서번호 10,20,30번이 각각 그려지게하시오 ~
+
+          
+
+
+* R 의 자료구조 5가지 :   1.  vector  
+                                               2.  matrix
+                                              3.  array
+                                              4.  data frame
+                                              5.  list 
+  c(emp$job, emp$deptno)
+  list(emp$job, emp$deptno) 
+ tapply( vector,  여러개 컬럼 명시할때는 리스트로 제공, sum )
+
+■ Q-81.  직업과 직업별 토탈월급을 가지고 원형(pie) 그래프를 그리시오 !
+
+답: 
+
+x <-  tapply(  emp$sal,  emp$job,  sum )
+
+pie( x,  col=rainbow(5),  density=80 )
+
+■ Q-82.  위의 그래프를 3D 로 그리시오 ~
+
+install.packages("plotrix")
+library( plotrix )
+
+pie3D( x, explode=0.1, labels=rownames(x) )
+
+설명:  explode 는 벌어짐 정도 입니다. 
+
+■ Q-83. 위의 그래프의 결과에 직업 옆에 비율도 같이 출력되게 하시오 !
+
+x <- tapply( emp$sal, emp$job, sum )             # 직업별 토탈월급을 가로로 출력
+x2 <- aggregate( sal~job, emp, sum )               # 직업별 토탈월급을 세로로 출력 
+pct <-  round( x2$sal / sum(emp$sal) *100, 1) 
+pct 
+job_label <-  paste(  x2$job, ':', pct,  '%' )
+job_label 
+
+pie3D(  x,  explode=0.1, labels=job_label )                     # 3D 로 원형 그래프 그리기 
+pie(  x, labels=job_label ,col=rainbow(14))                     # 그냥 원형 그래프 그리기 
+
+■ Q-84. 유방암 데이터의 diagnosis 의 양성과 악성의 비율을 원형 그래프로
+그리시오 ~
+
+x <- tapply( wisc$id, wisc$diagnosis, length ) # diagnosis 별 건수를 가로로 출력
+x2 <- aggregate( id~diagnosis, wisc, length ) # diagnosis 별 건수를 세로로 출력
+x
+pct <-  round( x2$id / nrow(wisc) *100, 1) 
+pct 
+w_label <-  paste(  x2$diagnosis, ':', pct,  '%' )
+w_label 
+pie ( x , col=c('green','red') , labels=w_label)
+
+설명:  그래프를 그릴때는 가로로 출력되는 결과 데이터를 가지고 그려야 합니다.
+         비율을 나타내는 라벨을 만들때는 세로로 출력되는 결과 데이터를 가지고
+         만듭니다. 
+
+■  SQL 과  R  비교 (조인)
+
+     Oracle             vs                  R 
+ 
+    equi join
+   non equi join                       merge 
+   outer  join
+   self  join
+
+ dept.csv 를 내려받아 dept 라는 변수에 로드하시오 !
+
+dept <- read.csv("dept.csv")
+dept
+
+■ Q-85.  이름과 부서위치를 출력하시오 !
+
+SQL>  select  e.ename,  d.loc
+           from  emp  e, dept  d
+           where  e.deptno = d.deptno;
+
+# emp 와 dept 를 조인하는데 deptno 에 의해서 조인해라 ~
+
+R> x <- merge(  emp, dept,  by="deptno")
+
+R> x[    ,  c("ename","loc") ] 
+
+설명:  x  데이터 프레임에서 ename 과 loc 만 출력
+
+■ Q-86.  부서위치가 DALLAS 인 사원들의 이름과 월급과 부서위치를 출력하시오 !
+
+R> x <- merge(  emp, dept,  by="deptno")
+
+R> x[ x$loc=="DALLAS"   ,  c("ename","loc") ] 
+
+■ Q-87. 커미션이 NA 인 사원들의 이름과 부서위치와 커미션을 출력하시오 !
+
+R> x <- merge(  emp, dept,  by="deptno")
+
+R> x[ is.na( x$comm) , c("ename", "loc", "comm") ]
+
+■ Q-88. outer join 으로 이름과 부서위치를 출력하는데 아래의 SQL 과
+동일한 결과가 출력되게하시오 !
+
+SQL>  select  e.ename,  d.loc
+           from   emp  e,  dept   d
+           where  e.deptno (+) = d.deptno ;
+
+R>  x <-  merge( emp, dept,  by="deptno", all.y=T)
+                         ↑     ↑
+                          x      y 
+
+설명:   all.y=T 는 dept 테이블 쪽에 데이터가 모두 나오게 해라 ~~
+
+R>  x[          , c("ename", "loc") ] 
+
+■ Q-89. 아래의 SQL 의 결과를 R 로 구현하시오 
+
+SQL>  select  e.ename, d.loc
+            from  emp  e,  dept   d
+            where   e.deptno = d.deptno (+) ;
+
+R>  x <-  merge( emp, dept , by="deptno", all.x=T) 
+      x[         , c("ename", "loc") ]
+
+■ Q-90.  아래의 SQL 의 결과를 R 로 구현하시오 !
+
+SQL>  select  e.ename,  d.loc
+             from   emp   e  full  outer  join  dept   d
+             on   ( e.deptno = d.deptno );
+
+R>  x <-  merge( emp, dept , by="deptno", all=T) 
+      x[         , c("ename", "loc") ]
+
+■ Q-91.( self join ) 이름을 출력하고 그 옆에 자기의 직속상사의 이름을 출력하시오 !
+
+SQL> select  사원.ename,  관리자.ename
+          from    emp   사원,  emp  관리자
+          where  사원.mgr = 관리자.empno; 
+
+R> x <-  merge( emp,  emp,  by.x="mgr", by.y="empno")
+                               ↑     ↑
+                                x      y
+
+R>  x  
+
+
+R>  x[             ,  c("ename.x",  "ename.y") ] 
+
+■ Q-92.  위의 결과를 다시 출력하는데 자기의 월급이 자기의 직속상사의 월급보다
+더 큰 사원들만 출력하시오 !
+
+R>  x[ x$sal.x > x$sal.y  ,  c("ename.x",  "ename.y") ] 
+
+  ename.x ename.y
+1    FORD   JONES
+2   SCOTT   JONES
+
+■ Q-93. 위의 결과 데이터인 사원이름과 직속상사의 이름을 출력하는 데이터를 가지고
+사원 테이블의 조직도를 그리시오 ~
+
+install.packages("igraph")
+library( igraph )
+
+x <-  merge( emp, emp,  by.x="mgr", by.y="empno")
+a <-  x[        , c("ename.x", "ename.y") ]
+a
+b <-  graph.data.frame( a, directed=T)
+plot(b)
+
+■ Q-94. 위의 그래프를 구글의 googleVis 를 이용해서 시각화 하시오 !
+
+install.packages("googleVis")
+library(googleVis)
+
+a <- merge(emp,emp, by.x="empno",by.y="mgr", all.y=T)
+
+org <- gvisOrgChart(a, idvar="ename.y",parentvar="ename.x",
+        options=list(width=600, height=250, size='middle', allowCollapse=T))
+
+plot(org)
+
+■ Q-95. 부서위치, 부서위치별 토탈월급을 출력하시오 ~
+
+세로:
+x <-  merge( emp, dept, by="deptno", all=T )
+aggregate( x$sal ~ x$loc, x,   sum, na.action=na.pass )
+
+가로:
+x <-  merge( emp, dept, by="deptno", all=T )
+tapply( x$sal, x$loc, sum ) 
+
+■ Q-96. 위의 결과를 막대 그래프로 시각화 하시오 !
+
+설명:  가로로 출력한 결과 데이터를 가지고 그래프를 그립니다.
+
+가로:
+x <-  merge( emp, dept, by="deptno", all=T )
+x2 <- tapply( x$sal, x$loc, sum ) 
+x2
+barplot( x2, col=rainbow(4) ) 
+
+
+■ Q-97.  아래와 같이 부서위치별 년도별 토탈월급을 출력하시오!
+
+                 1980    1981     1982    1983
+BOSTON
+CHICAGO
+DALLAS
+NEW YORK 
+
+답:
+x <-  merge( emp, dept,  by="deptno", all=T)
+install.packages("lubridate")
+library( lubridate )
+year( emp$hiredate)  #  hiredate 에서 연도만 추출한다. 
+
+[1] 1981 1981 1981 1981 1981 1981 1981 1981 1981
+[10] 1981 1980 1982 1983 1982
+
+답: 
+x  <-  merge( emp, dept,  by="deptno", all=T)
+tapply(  x$sal, list( x$loc, year(x$hiredate) ),  sum )
+
+               1980 1981 1982 1983
+BOSTON     NA   NA   NA   NA
+CHICAGO    NA 9400   NA   NA
+DALLAS      800 5975 3000 1100
+NEW YORK   NA 7450 1300   NA
+
+■ Q-98.  위의 결과를 다시 출력하는데 NA 대신에 0 으로 출력되게하시오 !
+
+답: 
+x  <-  merge( emp, dept,  by="deptno", all=T)
+x2 <- tapply(  x$sal, list( year(x$hiredate), x$loc ),  sum )
+x2[ is.na(x2) ] <- 0
+x2
+         BOSTON CHICAGO DALLAS NEW YORK
+1980      0       0    800        0
+1981      0    9400   5975     7450
+1982      0       0   3000     1300
+1983      0       0   1100        0  
+
+■ Q-99. 위의 결과를 막대 그래프로 시각화 하시오 !
+
+답: 
+x  <-  merge( emp, dept,  by="deptno", all=T)
+x2 <- tapply(  x$sal, list( year(x$hiredate), x$loc ),  sum )
+x2[ is.na(x2) ] <- 0
+barplot( x2, col=rainbow(4),  beside=T, legend=rownames(x2), ylim=c(0,10000) )
+
+■ Q-100.  지하철 1-4호선 승하차 승객수.csv 를 R 로 로드해서 
+line 이라는 이름으로 데이터 프레임을 생성하시오 !
+( 데이터 게시판 127번 )
+
+line <-  read.csv("1-4호선승하차승객수.csv",  header=T) 
+head(line)
+ 
+설명:  line_no  :  몇 호선인지 (1호선 ~ 4호선)
+             time      :  시간
+              in         :   승차 인원수
+              out       :   하차 인원수 
+
+■ Q-101.  위의 line 에서 line_no 를 중복제거해서 출력하시오 !
+
+line <-  read.csv("1-4호선승하차승객수.csv",  header=T) 
+unique(line$line_no)
+[1] "line_1" "line_2" "line_3" "line_4"
+
+■ Q-102. 위의 지하철 승하차수 정보를 가지고 구글 모션차트를 그리시오 !
+
+line <-  read.csv("1-4호선승하차승객수.csv",  header=T) 
+t1 <-  gvisMotionChart( line,  idvar="line_no",  timevar="time")
+plot(t1)
+
+설명:  결제를 해야하므로 할 수 없습니다.
+
+■ Q-103.  부서번호, 부서번호별 토탈월급을 출력하는데 아래의 SQL 처럼 
+전체 토탈월급이 출력되게하시오 !
+
+SQL>  select  deptno,  sum(sal)
+           from  emp
+           group  by  rollup(deptno);
+
+R>  rbind( aggregate(sal~deptno, emp, sum) ,  c("   ", sum(emp$sal)  )  )
+
+  deptno   sal
+1     10  8750
+2     20 10875
+3     30  9400
+4          29025
+
+설명:  rbind 는 두개의 결과를 위아래로 출력하고 싶을때 사용하는 함수
+        cbind 는 두개의 결과를 양옆으로 출력하고 싶을때 사용하는 함수 
+
+■ Q-104.  cbind 를 사용해서  아래의 두개의 결과를 하나로 출력하시오 !
+
+a=aggregate(sal~deptno, emp, sum )
+b=aggregate(sal~deptno, emp, mean)
+cbind(a,b$sal)
+
+■ Q-105. 위의 결과의 컬럼명을 아래와 같이 출력되게하시오 !
+
+  부서번호 토탈월급   평균월급
+1     10      8750       2916.667
+2     20     10875      2175.000
+3     30      9400      1566.667
+
+답:
+a=aggregate(sal~deptno, emp, sum )
+b=aggregate(sal~deptno, emp, mean)
+c <- cbind(a,b$sal)
+names(c) <- c("부서번호", "토탈월급", "평균월급")
+c
+
+■ Q-106. (오늘의 마지막 문제)  아래의 SQL 의 결과를 R 로 구현하시오 !
+
+SQL> select  job, sum(sal)  as 토탈월급, 
+                       max(sal)  as  최대월급,
+                       min(sal)  as   최소월급,
+                       avg(sal)  as   평균월급,
+                       count(*)  as   인원수
+             from  emp
+             group   by  job;
+
+
+ 
