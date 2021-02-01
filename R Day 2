@@ -1,26 +1,4 @@
-
-분석을 위한 언어를 어떤걸 선택할지를 처음에 결정을 하는데 ?
-
-                               SQL,  R, 파이썬
-
-당장 이 수업 끝날때즈음 R 을 활용해서 이루어야할 목표 ? 
-1. 케글 상위권 도전
-2. 빅데이터 기사시험 필기,실기
-
- 어제 배웠던 내용은 R 을 이용한 데이터 검색
-
-  emp[ 행, 열 ] 
-
-■ 그룹함수 
-
-       Oracle                  vs                  R  
-
-1.     max                                         max
-2.     min                                          min
-3.     sum                                         sum
-4.     avg                                          mean
-5.    count                                      length (세로)
-                                                       table  (가로) 
+R Day 2 Problems
 
 ■ Q-52.  최대월급을 출력하시오 !
 
@@ -171,36 +149,9 @@ trunc 설명:  x 데이터 프레임의 평균월급의 값의 소수점 이하�
  나타낸다. 569개의 암조직 검사 예시가 들어있으며 각 예시는 32개의 특징을 갖는다.
  
 
-갑산성 초음파 검사할 때 초음파로 확인할 때 나오는 디지털 이미지 데이터
- 1. 반지름
- 2. 질감
- 3. 둘레
- 4. 넓이
- 5. 매끄러움
- 6. 조밀성
- 7. 오목함
+■ Q-68.  위의 결과를 원형 그래프로 시각화 하시오 !
 
 wisc <-  read.csv("wisc_bc_data.csv")
-
-nrow(wisc)  #전체 건수 확인 
-[1] 569
-
-ncol(wisc)  # 컬럼의 갯수 확인 
-
-str(wisc)   #  데이터 프레임 구조 확인 
-
-설명 : diagnosis 만 문자이고 나머지는 다 숫자 인데 diagnosis 가 유방암 환자가  
-          양성(B) 인지 악성인지(M) 를 나타내는 라벨(정답) 컬럼 입니다.  종속 변수 입니다.
-
-■ Q-67.   유방암 데이터에서 양성 환자가 몇명이고 악성 환자가 몇명인지 확인하시오 !
-
-세로:  aggregate(  id ~diagnosis ,  wisc,  length )
-
-가로:    table(wisc$diagnosis)
- B      M 
-357   212
-
-■ Q-68.  위의 결과를 원형 그래프로 시각화 하시오 !
 
 pie ( table(wisc$diagnosis), col=c('green','red') )
 
@@ -230,9 +181,9 @@ pie ( table(wisc$diagnosis), col=c('green','red') )
 
 ■ Q-72. 위의 결과를 막대 그래프로 시각화 하시오 !
 
-  x <- tapply( emp$sal,  format( as.Date(emp$hiredate),'%Y'),  sum ) 
+x <- tapply( emp$sal,  format( as.Date(emp$hiredate),'%Y'),  sum ) 
 
- barplot( x,  main="년도별 토탈월급", col=rainbow(5),  density=50 ) 
+barplot( x,  main="년도별 토탈월급", col=rainbow(5),  density=50 ) 
 
 ■ Q-73.  아래의 SQL의 결과를 R 로 구현하시오 !
 
@@ -323,15 +274,6 @@ barplot( x,  col=rainbow(5), legend=rownames(x), beside=T, density=50)
           
 
 
-* R 의 자료구조 5가지 :   1.  vector  
-                                               2.  matrix
-                                              3.  array
-                                              4.  data frame
-                                              5.  list 
-  c(emp$job, emp$deptno)
-  list(emp$job, emp$deptno) 
- tapply( vector,  여러개 컬럼 명시할때는 리스트로 제공, sum )
-
 ■ Q-81.  직업과 직업별 토탈월급을 가지고 원형(pie) 그래프를 그리시오 !
 
 답: 
@@ -377,16 +319,6 @@ pie ( x , col=c('green','red') , labels=w_label)
          비율을 나타내는 라벨을 만들때는 세로로 출력되는 결과 데이터를 가지고
          만듭니다. 
 
-■  SQL 과  R  비교 (조인)
-
-     Oracle             vs                  R 
- 
-    equi join
-   non equi join                       merge 
-   outer  join
-   self  join
-
- dept.csv 를 내려받아 dept 라는 변수에 로드하시오 !
 
 dept <- read.csv("dept.csv")
 dept
@@ -426,7 +358,7 @@ SQL>  select  e.ename,  d.loc
 
 R>  x <-  merge( emp, dept,  by="deptno", all.y=T)
                          ↑     ↑
-                          x      y 
+                         x      y 
 
 설명:   all.y=T 는 dept 테이블 쪽에 데이터가 모두 나오게 해라 ~~
 
@@ -458,7 +390,7 @@ SQL> select  사원.ename,  관리자.ename
 
 R> x <-  merge( emp,  emp,  by.x="mgr", by.y="empno")
                                ↑     ↑
-                                x      y
+                              x      y
 
 R>  x  
 
@@ -641,5 +573,3 @@ SQL> select  job, sum(sal)  as 토탈월급,
              from  emp
              group   by  job;
 
-
- 
